@@ -1,3 +1,3 @@
 module linuxdistroengine-go
 
-go 1.21.11
+go 1.21
