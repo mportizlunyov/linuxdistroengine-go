@@ -1,6 +1,6 @@
 // Written by Mikhail P. Ortiz-Lunyov
 //
-// Version 0.0.2-release (July 12th 2024)
+// Version 0.0.3-beta (July 12th 2024)
 //
 // This script is licensed under the GNU Public License v3 (GPLv3)
 // Intended for use on Linux to check the specific distro running, using native Linux tools.
@@ -8,7 +8,24 @@
 //
 // This is the actual engine which defines the Linux Distribution, or at least the family being run.
 
-// Package name
+/*
+linuxdistroengine is a Go package that returns the name of the Linux distro being run.
+
+The main method that does this is the DistroResult(*Argument*) method.
+
+Possible *Argument*s:
+
+	"id": Print
+	"k": Print the kernel version of the distro
+	"pn": Print the 'Pretty Name' of the distro, often including the version number
+
+Exit Codes:
+
+	0: All good
+	1: Generic error, see description
+	44: Distro nor family not found
+	254: Developer has not yet set error
+*/
 package linuxdistorengine
 
 // Import packages
@@ -22,46 +39,53 @@ import (
 
 // Declare fields
 // // Set constants
-// // // Version
-const SHORT_VERSION string = "0.0.2"
-const VERSION_NAME string = "July 12th 2024"
-const DEV_VERSION string = "-release"
-const LONG_VERSION string = "v" + SHORT_VERSION + DEV_VERSION + " (" + VERSION_NAME + ")"
 
-// // // Functional
-const DEFAULT string = "UNKNOWN"
-const OSRELEASE_AMOUNT = 2
+// Version constants
+const (
+	SHORT_VERSION string = "0.0.3"
+	VERSION_NAME  string = "July 12th 2024 II"
+	DEV_VERSION   string = "-release"
+	LONG_VERSION  string = "v" + SHORT_VERSION + DEV_VERSION + " (" + VERSION_NAME + ")"
+)
+
+// Functional package constants
+const (
+	DEFAULT          string = "UNKNOWN_DISTRO"
+	OSRELEASE_AMOUNT int    = 2
+)
 
 // // Other fields
+
+// An array containing potential paths to the os-release file
 var OSRELEASEFILE [OSRELEASE_AMOUNT]string = [OSRELEASE_AMOUNT]string{"/etc/os-release", "/lib/os-release"}
+
+// The string of the final result of the Distro Engine
 var found string
 
-// Function to centralize all errors
-func errorAll(compatibility bool, readOsReleaseErr bool, distroNotFound bool) int {
-	// Check if error is related to compatibility
-	switch compatibility {
-	case true:
+// Method to centralize all errors and return the appropriate exit code
+func errorAll(errorScore int) int {
+	switch errorScore {
+	// Incompatible OS
+	case 0:
 		fmt.Println("This program is intended to run on Linux")
 		return 1
-	}
-	switch readOsReleaseErr {
-	case true:
+	// Reading os-release file failed
+	case 1:
 		fmt.Println("Reading [*/os-release] file failed")
 		return 1
-	}
-	// Check if no distro was found
-	switch distroNotFound {
-	case true:
+	// Distro unidentified, not even family
+	case 2:
 		fmt.Println("Unidentifiable distro, not even family identified")
-		return 404
+		return 44
+	// Unset error messages
+	default:
+		// Default, if error has not been managed with specific error message
+		fmt.Println("ERROR MESSAGE NOT COMPLETE")
+		return 254
 	}
-
-	// Default, if error has not been managed with specific error message
-	fmt.Println("ERROR MESSAGE NOT COMPLETE")
-	return 254
 }
 
-// Checks if the /etc/os-release file exists
+// Checks if the os-release file exists, based on the OSRELEASEFILE field
 func OSReleaseFileExist() (bool, int) {
 	// Check if os.Stat() method returns an error
 	for i := 0; i < OSRELEASE_AMOUNT; i++ {
@@ -83,7 +107,6 @@ func readOSReleaseFile(option string, fileNum int) string {
 	var selectionCriteria string
 	var fileSelection string
 	var substringFirst int
-	// var returnName string
 
 	// Read the os-release file
 	content, readErr := os.ReadFile(OSRELEASEFILE[fileNum])
@@ -94,7 +117,8 @@ func readOSReleaseFile(option string, fileNum int) string {
 		// Slice fileContent file into fileContentSliced
 		fileContentSliced = strings.Split(fileContent, "\n")
 	default:
-		os.Exit(errorAll(false, true, false))
+		// Failed to read */os-release file
+		os.Exit(errorAll(1))
 	}
 
 	// Extract ID (Default), or PRETTY_NAME
@@ -136,7 +160,8 @@ func readOSReleaseFile(option string, fileNum int) string {
 	}
 }
 
-// Use alterantive means to find the distro name
+// Use alterantive means to find the distro name.
+// Such means includes checking package managers installed to at least identify the Distro family.
 func oSReleaseAlt() string {
 	// Initialise variables
 	var potFamily string
@@ -167,7 +192,7 @@ func oSReleaseAlt() string {
 func pkgManCheck() string {
 	// Initialise variables
 	var pkgMan string
-	var returnVal string
+	// var returnVal string
 	// Check package managers
 	for i := 0; i < 3; i++ {
 		switch i {
@@ -182,15 +207,15 @@ func pkgManCheck() string {
 		_, cmdErr := exec.Command(pkgMan, "--help").Output()
 		switch cmdErr {
 		case nil:
-			returnVal = pkgMan
-			i = 3 // End early
+			return pkgMan
 		}
 	}
 
-	return returnVal
+	// If none of the package managers are detected, return DEFAULT constant
+	return DEFAULT
 }
 
-// Checks if the script is run on a Linux OS
+// Returns true if the OS being run is Linux
 func IsLinux() bool {
 	return runtime.GOOS == "linux"
 }
@@ -207,7 +232,7 @@ func DistroResult(option string, verbose bool) string {
 	// Check if the OS is Linux or not
 	switch IsLinux() {
 	case false:
-		os.Exit(errorAll(true, false, false))
+		os.Exit(errorAll(0))
 	}
 
 	// Check if "k" option is called
@@ -221,7 +246,7 @@ func DistroResult(option string, verbose bool) string {
 			os.Exit(1)
 		}
 	default:
-		// Check if /etc/os-release exists
+		// Check if */os-release file exists
 		osReleaseExist, osReleaseNum = OSReleaseFileExist()
 		switch osReleaseExist {
 		case true:
