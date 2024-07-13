@@ -1,6 +1,6 @@
 // Written by Mikhail P. Ortiz-Lunyov
 //
-// Version 0.0.2-release (July 12th 2024)
+// Version 0.0.3-beta (July 12th 2024 II)
 //
 // This script is licensed under the GNU Public License v3 (GPLv3)
 // Intended for use on Linux to check the specific distro running, using native Linux tools.
@@ -8,7 +8,13 @@
 //
 // This is the front-end that uses the functions from the Linux Distro Engine
 
-// Package name
+/*
+Linux Distro Engine (Go ed.) main package.
+
+This package serves as the main package for the whole Linux Distro Engine.
+It contains the flags and default values to run the linuxdistroengine package,
+especially as a stand-alone compiled program
+*/
 package main
 
 // Import packages
@@ -21,14 +27,23 @@ import (
 )
 
 // Script-level fields
-const SHORT_VERSION string = "0.0.2"
-const VERSION_NAME string = "July 12th 2024"
-const DEV_VERSION string = "-release"
-const LONG_VERSION string = "v" + SHORT_VERSION + DEV_VERSION + " (" + VERSION_NAME + ")"
+// // Constants
 
+// Version constants
+const (
+	SHORT_VERSION string = "0.0.3"
+	VERSION_NAME  string = "July 12th 2024 II"
+	DEV_VERSION   string = "-release"
+	LONG_VERSION  string = "v" + SHORT_VERSION + DEV_VERSION + " (" + VERSION_NAME + ")"
+)
+
+// Verbosity flag field (not implemented as of v0.0.3)
 var verboseFlag bool
 
-// Main method
+// Main method of the program.
+//
+// This method declares the flags and sets the default value to use the
+// linuxdistroengine package.
 func main() {
 	// Declare variables
 	var option string
