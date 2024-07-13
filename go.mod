@@ -1,3 +1,3 @@
-module linuxdistroengine-go
+module github.com/mportizlunyov/linuxdistroengine-go
 
 go 1.21
