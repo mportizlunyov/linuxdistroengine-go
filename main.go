@@ -1,6 +1,6 @@
 // Written by Mikhail P. Ortiz-Lunyov
 //
-// Version 0.0.3-release (July 12th 2024 II)
+// Version 0.0.4-release (July 13th 2024)
 //
 // This script is licensed under the GNU Public License v3 (GPLv3)
 // Intended for use on Linux to check the specific distro running, using native Linux tools.
@@ -31,8 +31,8 @@ import (
 
 // Version constants
 const (
-	SHORT_VERSION string = "0.0.3"
-	VERSION_NAME  string = "July 12th 2024 II"
+	SHORT_VERSION string = "0.0.4"
+	VERSION_NAME  string = "July 13th 2024"
 	DEV_VERSION   string = "-release"
 	LONG_VERSION  string = "v" + SHORT_VERSION + DEV_VERSION + " (" + VERSION_NAME + ")"
 )
