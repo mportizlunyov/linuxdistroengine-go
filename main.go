@@ -1,19 +1,19 @@
-// Written by Mikhail P. Ortiz-Lunyov
+// Written by Mikhail P. Ortiz-Lunyov (mportizlunyov)
 //
-// Version 0.0.4-release (July 13th 2024)
+// Version 1.0.0-release (August 19th 2024)
 //
 // This script is licensed under the GNU Public License v3 (GPLv3)
 // Intended for use on Linux to check the specific distro running, using native Linux tools.
 // This is useful when developing programs to adapt to specific linux environments.
 //
-// This is the front-end that uses the functions from the Linux Distro Engine
+// This is the front-end that uses the functions from the Linux Distro Engine.
+// This is only compiled/run if being used as a stand-alone program.
 
 /*
-Linux Distro Engine (Go ed.) main package.
+Linux Distro Engine (Go edition) main package.
 
-This package serves as the main package for the whole Linux Distro Engine.
-It contains the flags and default values to run the linuxdistroengine package,
-especially as a stand-alone compiled program
+This package serves as a stand-alone application of the linuxdistroengine go package.
+It exists to demonstrate the capabilities of the linuxdistroengine package.
 */
 package main
 
@@ -27,33 +27,20 @@ import (
 )
 
 // Script-level fields
-// // Constants
-
-// Version constants
-const (
-	SHORT_VERSION string = "0.0.4"
-	VERSION_NAME  string = "July 13th 2024"
-	DEV_VERSION   string = "-release"
-	LONG_VERSION  string = "v" + SHORT_VERSION + DEV_VERSION + " (" + VERSION_NAME + ")"
-)
-
-// Verbosity flag field (not implemented as of v0.0.3)
-var verboseFlag bool
 
 // Main method of the program.
 //
 // This method declares the flags and sets the default value to use the
 // linuxdistroengine package.
 func main() {
-	// Declare variables
-	var option string
+	// Declare variables and their defaults
+	var option string = "id" // Default argument for the engine
+	var argsCount int = 0
 
 	// Check for flags
+	// // -v / --version
 	versionShort := flag.Bool("v", false, "Print the version number of this module")
 	versionLong := flag.Bool("version", false, "Long form of [-v]")
-	// // -vb / --verbose
-	verboseShort := flag.Bool("vb", false, "Print verbose output")
-	verboseLong := flag.Bool("verbose", false, "Long form of [-vb]")
 	// // -pn / --pretty-name
 	prettynameShort := flag.Bool("pn", false, "Print the full 'Pretty Name' of the distro, if applicable")
 	prettynameLong := flag.Bool("pretty-name", false, "Long form of [-pn]")
@@ -65,28 +52,65 @@ func main() {
 	// // Finalise flags
 	prettynameFlag := *prettynameLong || *prettynameShort
 	kernelFlag := *kernelLong || *kernelShort
-	verboseFlag = *verboseLong || *verboseShort
 	versionFlag := *versionShort || *versionLong
 
-	// Print version statement and exit if needed
-	switch versionFlag {
-	case true:
-		fmt.Println("LinuxDistroEngine-Go " + LONG_VERSION)
-		os.Exit(0)
+	// Prepare options based on parameter
+	switch true {
+	case versionFlag:
+		option = "v"
+		argsCount++
 	}
-
-	// Filter bad parameters, and prepare options
-	if prettynameFlag && kernelFlag {
-		fmt.Println("-pn & -k flags are incompatible")
-		os.Exit(1)
-	} else if prettynameFlag {
+	switch true {
+	case prettynameFlag:
 		option = "pn"
-	} else if kernelFlag {
+		argsCount++
+	}
+	switch true {
+	case kernelFlag:
 		option = "k"
-	} else {
-		option = "id"
+		argsCount++
 	}
 
-	// Print Distro result
-	fmt.Println(linuxdistorengine.DistroResult(option, verboseFlag))
+	// Define final action based on parameters
+	switch argsCount {
+	case 0:
+		fallthrough
+	case 1:
+		pkgResult, pkgErrCode := linuxdistorengine.DistroResult(option)
+		switch pkgErrCode {
+		case 0:
+			fmt.Println(pkgResult)
+		case 1:
+			fallthrough
+		case 2:
+			fallthrough
+		case 3:
+			fallthrough
+		case 4:
+			fallthrough
+		case 5:
+			switch pkgErrCode {
+			case 1:
+				fmt.Println("This program is intended to run on Linux")
+			case 2:
+				fmt.Println("[uname -r] command failed!")
+			case 3:
+				fmt.Println("Reading [os-release] file failed")
+			case 4:
+				fmt.Println("Neither ID nor PRETTY_NAME found in */os-release file")
+			case 5:
+				fmt.Println("Bad argument for DistroResult() method [ ", option, " ]")
+			}
+			os.Exit(1)
+		case 44:
+			fmt.Println(pkgResult)
+			os.Exit(44)
+		default:
+			fmt.Println("INTERNAL ERROR, MISSING ERROR CODE [", pkgErrCode, "]")
+			os.Exit(254)
+		}
+	default:
+		fmt.Println("Incompatible arguments")
+		os.Exit(1)
+	}
 }
